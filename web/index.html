@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MNIST Digit Classifier - AI Drawing Recognizer</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="background-gradient"></div>
+    
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1 class="title">
+                    <i class="fas fa-pencil-alt"></i> MNIST Digit Classifier
+                </h1>
+                <p class="subtitle">Desenhe um número e deixe a IA adivinhar! 🤖</p>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Canvas Section -->
+            <section class="canvas-section">
+                <div class="canvas-container">
+                    <canvas id="drawingCanvas" width="280" height="280"></canvas>
+                    <div class="canvas-overlay">
+                        <span class="instruction">Desenhe aqui</span>
+                    </div>
+                </div>
+                
+                <!-- Controls -->
+                <div class="controls">
+                    <button id="clearBtn" class="btn btn-danger" title="Limpar canvas">
+                        <i class="fas fa-trash"></i> Limpar
+                    </button>
+                    <button id="undoBtn" class="btn btn-secondary" title="Desfazer último traço">
+                        <i class="fas fa-undo"></i> Desfazer
+                    </button>
+                    <button id="predictBtn" class="btn btn-primary" title="Fazer predição">
+                        <i class="fas fa-brain"></i> Predizer
+                    </button>
+                </div>
+            </section>
+
+            <!-- Results Section -->
+            <section class="results-section">
+                <div class="results-container">
+                    <!-- Main Prediction -->
+                    <div class="prediction-box">
+                        <div class="prediction-label">Predição Principal</div>
+                        <div class="prediction-display">
+                            <div class="prediction-digit" id="predictionDigit">?</div>
+                            <div class="prediction-confidence" id="predictionConfidence">0%</div>
+                        </div>
+                    </div>
+
+                    <!-- Confidence Bar -->
+                    <div class="confidence-section">
+                        <label>Confiança</label>
+                        <div class="confidence-bar">
+                            <div class="confidence-fill" id="confidenceFill" style="width: 0%;"></div>
+                        </div>
+                        <span id="confidenceText" class="confidence-text">Aguardando predição...</span>
+                    </div>
+
+                    <!-- All Predictions -->
+                    <div class="probabilities-section">
+                        <label>Probabilidades por Dígito</label>
+                        <div class="probabilities-grid" id="probabilitiesGrid">
+                            <!-- Populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Stats Section -->
+            <section class="stats-section">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-palette"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-label">Pincel</div>
+                            <div class="stat-value">
+                                <input type="range" id="brushSize" min="5" max="25" value="15" 
+                                       class="slider" title="Ajuste o tamanho do pincel">
+                                <span id="brushSizeValue">15px</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-info-circle"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-label">Status</div>
+                            <div class="stat-value" id="status">Pronto</div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-gauge"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-label">Tempo</div>
+                            <div class="stat-value" id="inferenceTime">0ms</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Info Section -->
+            <section class="info-section">
+                <div class="info-grid">
+                    <div class="info-card">
+                        <h3><i class="fas fa-robot"></i> Sobre o Modelo</h3>
+                        <ul>
+                            <li>🧠 Rede Neural Convolucional (CNN)</li>
+                            <li>📊 Treinado com dataset MNIST</li>
+                            <li>✅ Acurácia: 99.03%</li>
+                            <li>⚡ Inferência em Tempo Real</li>
+                        </ul>
+                    </div>
+
+                    <div class="info-card">
+                        <h3><i class="fas fa-keyboard"></i> Como Usar</h3>
+                        <ol>
+                            <li>Desenhe um dígito (0-9) no canvas</li>
+                            <li>Clique em "Predizer" ou deixe automático</li>
+                            <li>Veja a predição da IA em tempo real</li>
+                            <li>Tente outro número ou clique "Limpar"</li>
+                        </ol>
+                    </div>
+
+                    <div class="info-card">
+                        <h3><i class="fas fa-code"></i> Tecnologia</h3>
+                        <ul>
+                            <li>🔧 ONNX Runtime (Inferência JS)</li>
+                            <li>📐 PyTorch CNN (Modelo)</li>
+                            <li>🎨 HTML5 Canvas</li>
+                            <li>🚀 GitHub Pages</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Gallery Section -->
+            <section class="gallery-section">
+                <h2>Sua Galeria de Predições</h2>
+                <div class="gallery" id="gallery">
+                    <div class="empty-gallery">
+                        <i class="fas fa-images"></i>
+                        <p>As suas predições aparecerão aqui!</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>
+                <i class="fas fa-heart"></i> Criado com ❤️ usando PyTorch e JavaScript
+            </p>
+            <p>
+                <a href="https://github.com" target="_blank">
+                    <i class="fab fa-github"></i> GitHub Repository
+                </a>
+            </p>
+        </footer>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="spinner">
+            <i class="fas fa-spinner"></i>
+        </div>
+        <p>Carregando modelo...</p>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.all.min.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
