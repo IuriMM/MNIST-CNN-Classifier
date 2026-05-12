@@ -1,0 +1,11 @@
+MNIST CNN - Performance Metrics
+==================================================
+
+Training Loss: 0.0064
+Training Accuracy: 99.78%
+
+Validation Loss: 0.0413
+Validation Accuracy: 98.78%
+
+Test Loss: 0.0323
+Test Accuracy: 99.03%
