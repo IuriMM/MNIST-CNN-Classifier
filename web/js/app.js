@@ -1,12 +1,13 @@
 /**
  * MNIST Digit Classifier - JavaScript Application
- * Main application logic for drawing and real-time prediction
+ * Updated for Obsidian Theme
  */
 
 // Constants
 const CANVAS_SIZE = 280;
 const MODEL_SIZE = 28;
-const DRAW_COLOR = '#000000';
+const DRAW_COLOR = '#ffffff'; // White ink for dark theme
+const BG_COLOR = '#000000';   // Pure black for better MNIST compatibility
 const AUTO_PREDICT_DELAY = 500;
 
 // State
@@ -25,14 +26,9 @@ const undoBtn = document.getElementById('undoBtn');
 const predictBtn = document.getElementById('predictBtn');
 const predictionDigit = document.getElementById('predictionDigit');
 const predictionConfidence = document.getElementById('predictionConfidence');
-const confidenceFill = document.getElementById('confidenceFill');
-const confidenceText = document.getElementById('confidenceText');
 const probabilitiesGrid = document.getElementById('probabilitiesGrid');
-const brushSizeSlider = document.getElementById('brushSize');
-const brushSizeValue = document.getElementById('brushSizeValue');
 const statusText = document.getElementById('status');
 const inferenceTimeText = document.getElementById('inferenceTime');
-const gallery = document.getElementById('gallery');
 const loadingOverlay = document.getElementById('loadingOverlay');
 
 // Initialize
@@ -44,7 +40,7 @@ document.addEventListener('DOMContentLoaded', async () => {
  * Initialize the application
  */
 async function init() {
-    console.log('🚀 Initializing MNIST Digit Classifier...');
+    console.log('🚀 Initializing MNIST Digit Classifier (Obsidian Edition)...');
     
     // Setup canvas
     setupCanvas();
@@ -59,31 +55,32 @@ async function init() {
     initProbabilities();
     
     // Hide loading overlay
-    loadingOverlay.classList.add('hidden');
+    if (loadingOverlay) {
+        loadingOverlay.classList.add('hidden');
+    }
     
     console.log('✅ Application initialized successfully!');
-    updateStatus('Pronto! Comece a desenhar');
 }
 
 /**
  * Setup canvas properties and context
  */
 function setupCanvas() {
-    console.log('📐 Setting up canvas...');
-    
     canvas = drawingCanvas;
+    if (!canvas) return;
+
     ctx = canvas.getContext('2d', { willReadFrequently: true });
     
-    // Set actual dimensions
+    // Set dimensions based on CSS or default
     const rect = canvas.getBoundingClientRect();
-    canvas.width = Math.min(rect.width, CANVAS_SIZE);
+    canvas.width = rect.width || CANVAS_SIZE;
     canvas.height = canvas.width;
     
     // Configure canvas context
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
-    ctx.lineWidth = 15;
-    ctx.fillStyle = '#ffffff';
+    ctx.lineWidth = 20; // Thicker stroke for better digit recognition
+    ctx.fillStyle = BG_COLOR;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 }
 
@@ -92,32 +89,40 @@ function setupCanvas() {
  */
 async function loadModel() {
     console.log('🤖 Loading ONNX model...');
-    updateStatus('Carregando modelo...');
-    
     try {
+        // Modern ONNX Runtime configuration
         const ortConfig = {
-            executionProviders: ['webassembly'],
+            executionProviders: ['wasm'], // Use 'wasm' for best cross-browser support
             graphOptimizationLevel: 'all',
         };
         
-        ort.env.wasm.wasmPaths = 'https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/';
-        
-        // Try to load from local path first, fallback to CDN
-        const modelPath = './models/mnist_cnn.onnx';
-        
-        try {
-            session = await ort.InferenceSession.create(modelPath, ortConfig);
-            console.log('✅ Model loaded from local path');
-        } catch (e) {
-            console.warn('⚠ Local model not found, using placeholder mode');
-            console.warn('To enable predictions, run: python convert_to_onnx.py');
-            updateStatus('Modelo não encontrado - modo demonstração');
-            session = null;
+        // Set WASM paths explicitly to the same CDN version as index.html
+        // This ensures the wasm files are found even if not in the local folder
+        if (typeof ort !== 'undefined' && ort.env && ort.env.wasm) {
+            ort.env.wasm.wasmPaths = 'https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/';
         }
+        
+        // Model path relative to index.html
+        const modelPath = 'models/mnist_cnn.onnx';
+        
+        console.log(`📡 Fetching model from: ${modelPath}`);
+        
+        // Load the session
+        session = await ort.InferenceSession.create(modelPath, ortConfig);
+        
+        console.log('✅ ONNX Model Loaded Successfully');
+        console.log('Input names:', session.inputNames);
+        console.log('Output names:', session.outputNames);
+        
+        if (statusText) statusText.textContent = 'Modelo ONNX Ativo';
     } catch (error) {
-        console.error('❌ Error loading model:', error);
-        updateStatus('Erro ao carregar modelo');
+        console.error('❌ CRITICAL: Failed to load ONNX model:', error);
         session = null;
+        if (statusText) statusText.textContent = 'Erro ao carregar modelo';
+        
+        // Detailed error for the user
+        const errorMsg = error.message || 'Unknown error';
+        alert(`Falha ao carregar o modelo de IA: ${errorMsg}\n\nVerifique se o arquivo 'web/models/mnist_cnn.onnx' existe e se você está usando um servidor local (http://localhost).`);
     }
 }
 
@@ -125,30 +130,21 @@ async function loadModel() {
  * Setup event listeners
  */
 function setupEventListeners() {
-    console.log('🎮 Setting up event listeners...');
-    
     // Canvas events
     canvas.addEventListener('mousedown', startDrawing);
     canvas.addEventListener('mousemove', draw);
     canvas.addEventListener('mouseup', stopDrawing);
     canvas.addEventListener('mouseout', stopDrawing);
     
-    // Touch events for mobile
-    canvas.addEventListener('touchstart', handleTouch);
-    canvas.addEventListener('touchmove', handleTouch);
+    // Touch events
+    canvas.addEventListener('touchstart', (e) => { e.preventDefault(); handleTouch(e); });
+    canvas.addEventListener('touchmove', (e) => { e.preventDefault(); handleTouch(e); });
     canvas.addEventListener('touchend', stopDrawing);
     
     // Button events
     clearBtn.addEventListener('click', clearCanvas);
     undoBtn.addEventListener('click', undoDrawing);
     predictBtn.addEventListener('click', predict);
-    
-    // Brush size slider
-    brushSizeSlider.addEventListener('input', (e) => {
-        const size = e.target.value;
-        brushSizeValue.textContent = size + 'px';
-        ctx.lineWidth = size;
-    });
 }
 
 /**
@@ -160,12 +156,10 @@ function initProbabilities() {
     for (let i = 0; i < 10; i++) {
         const div = document.createElement('div');
         div.className = 'probability-item';
+        div.setAttribute('data-digit', i);
         div.innerHTML = `
+            <div class="probability-bar" style="height: 0px;"></div>
             <div class="probability-digit">${i}</div>
-            <div class="probability-bar">
-                <div class="probability-bar-fill" style="width: 0%;"></div>
-            </div>
-            <div class="probability-value">0%</div>
         `;
         probabilitiesGrid.appendChild(div);
     }
@@ -180,13 +174,14 @@ function startDrawing(e) {
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
     
-    // Save state for undo
     drawingHistory.push(canvas.toDataURL());
     
     ctx.beginPath();
     ctx.moveTo(x, y);
     
-    updateStatus('Desenhando...');
+    // Hide instruction text on first stroke
+    const instruction = document.querySelector('.instruction');
+    if (instruction) instruction.style.opacity = '0';
 }
 
 /**
@@ -214,14 +209,12 @@ function draw(e) {
  * Handle touch events
  */
 function handleTouch(e) {
-    e.preventDefault();
-    
     const touch = e.touches[0];
+    const rect = canvas.getBoundingClientRect();
     const mouseEvent = new MouseEvent(e.type === 'touchstart' ? 'mousedown' : 'mousemove', {
         clientX: touch.clientX,
         clientY: touch.clientY,
     });
-    
     canvas.dispatchEvent(mouseEvent);
 }
 
@@ -232,7 +225,6 @@ function stopDrawing() {
     if (isDrawing) {
         isDrawing = false;
         ctx.closePath();
-        updateStatus('Pronto! Desenhe outro número ou clique predizer');
     }
 }
 
@@ -240,88 +232,99 @@ function stopDrawing() {
  * Clear canvas
  */
 function clearCanvas() {
-    console.log('🗑 Clearing canvas...');
-    
-    ctx.fillStyle = '#ffffff';
+    ctx.fillStyle = BG_COLOR;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
     drawingHistory = [];
     
-    // Reset prediction display
+    // Reset UI
     predictionDigit.textContent = '?';
     predictionConfidence.textContent = '0%';
-    confidenceFill.style.width = '0%';
-    confidenceText.textContent = 'Desenhe um número!';
+    const instruction = document.querySelector('.instruction');
+    if (instruction) instruction.style.opacity = '1';
     
     // Reset probabilities
     document.querySelectorAll('.probability-item').forEach(item => {
-        item.querySelector('.probability-bar-fill').style.width = '0%';
-        item.querySelector('.probability-value').textContent = '0%';
+        item.classList.remove('winner');
+        item.querySelector('.probability-bar').style.height = '0px';
     });
-    
-    updateStatus('Canvas limpo!');
 }
 
 /**
- * Undo last drawing action
+ * Undo last action
  */
 function undoDrawing() {
-    console.log('↶ Undoing drawing...');
-    
     if (drawingHistory.length > 0) {
-        drawingHistory.pop();
-        
-        if (drawingHistory.length > 0) {
-            const imageData = new Image();
-            imageData.src = drawingHistory[drawingHistory.length - 1];
-            imageData.onload = () => {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                ctx.drawImage(imageData, 0, 0);
-            };
-        } else {
-            clearCanvas();
-        }
-        
-        updateStatus('Ação desfeita!');
+        const lastState = drawingHistory.pop();
+        const img = new Image();
+        img.src = lastState;
+        img.onload = () => {
+            ctx.fillStyle = BG_COLOR;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, 0, 0);
+            predict();
+        };
+    } else {
+        clearCanvas();
     }
 }
 
 /**
- * Preprocess canvas image for model
+ * Preprocess image for MNIST (expects white on black, centered, 20x20 inside 28x28)
  */
 function preprocessImage() {
-    console.log('🔄 Preprocessing image...');
+    // 1. Find the bounding box of the drawing
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const data = imageData.data;
+    let minX = canvas.width, minY = canvas.height, maxX = 0, maxY = 0;
+    let found = false;
+
+    for (let y = 0; y < canvas.height; y++) {
+        for (let x = 0; x < canvas.width; x++) {
+            const i = (y * canvas.width + x) * 4;
+            // Since it's white on black, checking any channel is enough
+            if (data[i] > 20) { 
+                minX = Math.min(minX, x);
+                minY = Math.min(minY, y);
+                maxX = Math.max(maxX, x);
+                maxY = Math.max(maxY, y);
+                found = true;
+            }
+        }
+    }
+
+    if (!found) return new Float32Array(MODEL_SIZE * MODEL_SIZE);
+
+    // 2. Extract and rescale to 20x20
+    const boxW = maxX - minX + 1;
+    const boxH = maxY - minY + 1;
     
-    // Create a temporary canvas for preprocessing
     const tempCanvas = document.createElement('canvas');
-    tempCanvas.width = MODEL_SIZE;
-    tempCanvas.height = MODEL_SIZE;
     const tempCtx = tempCanvas.getContext('2d');
     
-    // Fill with white background
-    tempCtx.fillStyle = '#ffffff';
+    // Calculate scale to fit in 20x20
+    const scale = 20 / Math.max(boxW, boxH);
+    const sw = boxW * scale;
+    const sh = boxH * scale;
+
+    // 3. Center in 28x28
+    tempCanvas.width = MODEL_SIZE;
+    tempCanvas.height = MODEL_SIZE;
+    tempCtx.fillStyle = BG_COLOR;
     tempCtx.fillRect(0, 0, MODEL_SIZE, MODEL_SIZE);
     
-    // Draw the canvas image scaled to 28x28
-    tempCtx.drawImage(canvas, 0, 0, MODEL_SIZE, MODEL_SIZE);
-    
-    // Get image data
-    const imageData = tempCtx.getImageData(0, 0, MODEL_SIZE, MODEL_SIZE);
-    const data = imageData.data;
-    
-    // Convert to grayscale and normalize to [0, 1]
+    // Draw centered
+    const dx = (MODEL_SIZE - sw) / 2;
+    const dy = (MODEL_SIZE - sh) / 2;
+    tempCtx.drawImage(canvas, minX, minY, boxW, boxH, dx, dy, sw, sh);
+
+    // 4. Final normalization
+    const finalData = tempCtx.getImageData(0, 0, MODEL_SIZE, MODEL_SIZE).data;
     const input = new Float32Array(MODEL_SIZE * MODEL_SIZE);
     
-    for (let i = 0; i < data.length; i += 4) {
-        const r = data[i];
-        const g = data[i + 1];
-        const b = data[i + 2];
-        
-        // Convert to grayscale using luminosity method
-        const gray = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-        
-        // Invert (MNIST expects white on black)
-        input[i / 4] = 1 - gray;
+    for (let i = 0; i < finalData.length; i += 4) {
+        // Luminosity method (already grayscale from our drawing)
+        input[i / 4] = finalData[i] / 255;
     }
     
     return input;
@@ -331,79 +334,47 @@ function preprocessImage() {
  * Make prediction
  */
 async function predict() {
-    console.log('🧠 Making prediction...');
-    updateStatus('Analisando...');
-    
-    const startTime = performance.now();
-    
     if (!session) {
-        console.warn('⚠ Model not loaded');
-        
-        // Demo prediction
-        const demoResults = generateDemoPrediction();
-        displayResults(demoResults);
-        
-        updateStatus('Modo demonstração (modelo não carregado)');
+        console.warn('Inference skipped: Model not loaded');
         return;
     }
+
+    const startTime = performance.now();
     
     try {
-        // Preprocess image
         const input = preprocessImage();
-        
-        // Create tensor
         const tensor = new ort.Tensor('float32', input, [1, 1, MODEL_SIZE, MODEL_SIZE]);
         
-        // Run inference
-        const feeds = { input: tensor };
+        // Dynamically map input/output names from the session
+        const inputName = session.inputNames[0];
+        const outputName = session.outputNames[0];
+        
+        const feeds = {};
+        feeds[inputName] = tensor;
+        
         const results = await session.run(feeds);
-        
-        // Get output
-        const output = results.output.data;
-        
-        // Convert to probabilities
+        const output = results[outputName].data;
         const probabilities = softmax(Array.from(output));
         
-        // Get top prediction
         const maxIdx = probabilities.indexOf(Math.max(...probabilities));
         const confidence = probabilities[maxIdx];
         
-        // Store results
-        predictions.push({
-            digit: maxIdx,
-            confidence: confidence,
-            probabilities: probabilities,
-            timestamp: new Date().toLocaleTimeString()
-        });
-        
-        // Display results
         displayResults({
             digit: maxIdx,
             confidence: confidence,
             probabilities: probabilities
         });
         
-        // Add to gallery
-        addToGallery(maxIdx, confidence);
-        
         const endTime = performance.now();
-        const inferenceTime = (endTime - startTime).toFixed(2);
-        
-        console.log(`✅ Prediction: ${maxIdx} (${(confidence * 100).toFixed(2)}%)`);
-        console.log(`⏱ Inference time: ${inferenceTime}ms`);
-        
-        inferenceTimeText.textContent = `${inferenceTime}ms`;
-        updateStatus(`Predição concluída!`);
+        if (inferenceTimeText) {
+            inferenceTimeText.textContent = `${(endTime - startTime).toFixed(1)}ms`;
+        }
         
     } catch (error) {
-        console.error('❌ Error during inference:', error);
-        updateStatus('Erro durante a predição');
+        console.error('❌ Inference error:', error);
     }
 }
 
-/**
- * Softmax function
- */
 function softmax(arr) {
     const maxVal = Math.max(...arr);
     const exps = arr.map(x => Math.exp(x - maxVal));
@@ -411,123 +382,40 @@ function softmax(arr) {
     return exps.map(x => x / sumExps);
 }
 
-/**
- * Generate demo prediction (for when model is not loaded)
- */
 function generateDemoPrediction() {
     const digit = Math.floor(Math.random() * 10);
-    const probabilities = new Array(10).fill(0);
-    
-    // Concentrate probability around the chosen digit
-    probabilities[digit] = 0.85 + Math.random() * 0.14;
-    
-    // Distribute remaining probability
-    const remaining = 1 - probabilities[digit];
-    for (let i = 0; i < 10; i++) {
-        if (i !== digit) {
-            probabilities[i] = remaining / 9;
-        }
-    }
-    
+    const probabilities = new Array(10).fill(0).map(() => Math.random() * 0.1);
+    probabilities[digit] = 0.8 + Math.random() * 0.19;
+    const sum = probabilities.reduce((a, b) => a + b);
     return {
-        digit: digit,
-        confidence: probabilities[digit],
-        probabilities: probabilities
+        digit,
+        confidence: probabilities[digit] / sum,
+        probabilities: probabilities.map(p => p / sum)
     };
 }
 
 /**
- * Display prediction results
+ * Display results in UI
  */
 function displayResults(results) {
     const { digit, confidence, probabilities } = results;
     
-    // Update main prediction
     predictionDigit.textContent = digit;
     predictionConfidence.textContent = (confidence * 100).toFixed(1) + '%';
     
-    // Update confidence bar
-    const confidencePercent = confidence * 100;
-    confidenceFill.style.width = confidencePercent + '%';
-    confidenceText.textContent = `${confidencePercent.toFixed(1)}% de confiança`;
+    const items = document.querySelectorAll('.probability-item');
+    const maxBarHeight = 100; // px
     
-    // Update probability items
-    const probabilityItems = document.querySelectorAll('.probability-item');
-    probabilityItems.forEach((item, index) => {
-        const prob = probabilities[index] * 100;
-        const barFill = item.querySelector('.probability-bar-fill');
-        const valueText = item.querySelector('.probability-value');
+    items.forEach((item, index) => {
+        const prob = probabilities[index];
+        const bar = item.querySelector('.probability-bar');
         
-        barFill.style.width = prob + '%';
-        valueText.textContent = prob.toFixed(0) + '%';
+        bar.style.height = (prob * maxBarHeight) + 'px';
+        
+        if (index === digit) {
+            item.classList.add('winner');
+        } else {
+            item.classList.remove('winner');
+        }
     });
 }
-
-/**
- * Add prediction to gallery
- */
-function addToGallery(digit, confidence) {
-    // Remove empty message if exists
-    const emptyGallery = gallery.querySelector('.empty-gallery');
-    if (emptyGallery) {
-        emptyGallery.remove();
-    }
-    
-    // Create gallery item
-    const item = document.createElement('div');
-    item.className = 'gallery-item';
-    
-    // Create canvas for thumbnail
-    const thumbCanvas = document.createElement('canvas');
-    thumbCanvas.width = 100;
-    thumbCanvas.height = 100;
-    const thumbCtx = thumbCanvas.getContext('2d');
-    
-    // Draw thumbnail
-    thumbCtx.drawImage(canvas, 0, 0, 100, 100);
-    
-    // Add canvas to item
-    item.appendChild(thumbCanvas);
-    
-    // Add info
-    const info = document.createElement('div');
-    info.className = 'gallery-item-info';
-    info.innerHTML = `
-        <div style="font-size: 1.3em;">${digit}</div>
-        <div style="font-size: 0.8em;">${(confidence * 100).toFixed(0)}%</div>
-    `;
-    item.appendChild(info);
-    
-    // Limit gallery to 20 items
-    if (gallery.children.length >= 20) {
-        gallery.removeChild(gallery.firstChild);
-    }
-    
-    gallery.appendChild(item);
-    
-    // Scroll to end
-    item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-}
-
-/**
- * Update status text
- */
-function updateStatus(message) {
-    statusText.textContent = message;
-    console.log(`📝 Status: ${message}`);
-}
-
-// Make functions available globally for debugging
-window.app = {
-    predict,
-    clearCanvas,
-    session: () => session,
-    getDrawingData: () => canvas.toDataURL(),
-    getPredictions: () => predictions,
-};
-
-console.log('💡 Dicas de debug:');
-console.log('  app.predict() - Fazer predição manual');
-console.log('  app.clearCanvas() - Limpar canvas');
-console.log('  app.getPredictions() - Ver histórico de predições');
-console.log('  app.getDrawingData() - Obter desenho como imagem base64');

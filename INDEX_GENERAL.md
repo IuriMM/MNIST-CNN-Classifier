@@ -391,8 +391,8 @@ git push
 
 ## 📝 Versionamento
 
-- **Versão**: 1.0 (Production Release)
-- **Data**: 2024
+- **Versão**: 0.1 (Production Release)
+- **Data**: 2026
 - **Status**: ✅ Completo e Testado
 
 ---
@@ -424,8 +424,8 @@ git push
 
 ---
 
-**Última Atualização**: 2024  
-**Autor**: Seu Nome  
+**Última Atualização**: 2026
+**Autor**: Iuri  
 **Licença**: MIT  
 
-Made with ❤️ by You
+Made with ❤️ by Iuri

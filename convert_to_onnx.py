@@ -55,12 +55,13 @@ def convert_to_onnx(
     output_dir = Path(output_path).parent
     output_dir.mkdir(parents=True, exist_ok=True)
     
+    # Use Opset 18 which is better supported by newer PyTorch
     torch.onnx.export(
         model,
         dummy_input,
         output_path,
         export_params=True,
-        opset_version=12,
+        opset_version=18,
         do_constant_folding=True,
         input_names=['input'],
         output_names=['output'],
@@ -70,6 +71,16 @@ def convert_to_onnx(
         },
         verbose=False,
     )
+    
+    # Force self-contained if it was split
+    try:
+        import onnx
+        model_proto = onnx.load(output_path)
+        # This will bundle external data if present and save as a single file
+        onnx.save_model(model_proto, output_path, save_as_external_data=False)
+        print("   ✓ Model bundled into single file")
+    except Exception as e:
+        print(f"   ⚠ Could not bundle model: {e}")
     
     print(f"   ✓ Model converted successfully")
     print(f"   ✓ Saved to: {output_path}")

@@ -6,173 +6,153 @@
     <title>MNIST Digit Classifier - AI Drawing Recognizer</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;700&family=Inter:ital,wght@0,400;0,500;0,700;1,400&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="background-gradient"></div>
-    
-    <div class="container">
-        <!-- Header -->
-        <header class="header">
-            <div class="header-content">
-                <h1 class="title">
-                    <i class="fas fa-pencil-alt"></i> MNIST Digit Classifier
-                </h1>
-                <p class="subtitle">Desenhe um número e deixe a IA adivinhar! 🤖</p>
+    <div class="hero">
+        <!-- Header - TopNavBar -->
+        <nav class="top-nav">
+            <div class="nav-container">
+                <div class="logo">MNIST.AI</div>
+                <div class="nav-links">
+                    <a href="#" class="nav-link active">Classifier</a>
+                    <a href="#" class="nav-link">Dataset</a>
+                    <a href="#" class="nav-link">About</a>
+                    <a href="#" class="nav-link">Help</a>
+                </div>
+                <button class="btn-deploy">Deploy Model</button>
             </div>
-        </header>
+        </nav>
 
-        <!-- Main Content -->
-        <main class="main-content">
-            <!-- Canvas Section -->
-            <section class="canvas-section">
-                <div class="canvas-container">
-                    <canvas id="drawingCanvas" width="280" height="280"></canvas>
-                    <div class="canvas-overlay">
-                        <span class="instruction">Desenhe aqui</span>
+        <div class="app-container">
+            <!-- Aside - SideNavBar -->
+            <aside class="sidebar">
+                <div class="sidebar-header">
+                    <div class="engine-icon">
+                        <i class="fas fa-brain"></i>
+                    </div>
+                    <div class="engine-info">
+                        <span class="engine-name">Core Engine</span>
+                        <span class="engine-version">v2.4.0-obsidian</span>
                     </div>
                 </div>
-                
-                <!-- Controls -->
-                <div class="controls">
-                    <button id="clearBtn" class="btn btn-danger" title="Limpar canvas">
-                        <i class="fas fa-trash"></i> Limpar
-                    </button>
-                    <button id="undoBtn" class="btn btn-secondary" title="Desfazer último traço">
-                        <i class="fas fa-undo"></i> Desfazer
-                    </button>
-                    <button id="predictBtn" class="btn btn-primary" title="Fazer predição">
-                        <i class="fas fa-brain"></i> Predizer
-                    </button>
-                </div>
-            </section>
+                <nav class="side-nav">
+                    <a href="#" class="side-link active">
+                        <i class="fas fa-th-large"></i>
+                        <span>Workspace</span>
+                    </a>
+                    <a href="#" class="side-link">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Analytics</span>
+                    </a>
+                    <a href="#" class="side-link">
+                        <i class="fas fa-history"></i>
+                        <span>History</span>
+                    </a>
+                    <a href="#" class="side-link">
+                        <i class="fas fa-cog"></i>
+                        <span>Settings</span>
+                    </a>
+                </nav>
+            </aside>
 
-            <!-- Results Section -->
-            <section class="results-section">
-                <div class="results-container">
-                    <!-- Main Prediction -->
-                    <div class="prediction-box">
-                        <div class="prediction-label">Predição Principal</div>
-                        <div class="prediction-display">
-                            <div class="prediction-digit" id="predictionDigit">?</div>
-                            <div class="prediction-confidence" id="predictionConfidence">0%</div>
+            <!-- Main Content Canvas -->
+            <main class="main-content">
+                <div class="content-wrapper">
+                    <header class="header-intro">
+                        <h1 class="title"><span class="highlight">MNIST</span> Digit Classifier</h1>
+                        <p class="subtitle">Desenhe um número e deixe a IA adivinhar! 🤖</p>
+                    </header>
+
+                    <!-- Drawing Workspace Bento -->
+                    <div class="workspace-bento">
+                        <div class="canvas-area bento-card">
+                            <div class="canvas-wrapper">
+                                <canvas id="drawingCanvas" width="280" height="280"></canvas>
+                                <div class="canvas-overlay">
+                                    <span class="instruction">Desenhe aqui</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="action-sidebar">
+                            <button id="clearBtn" class="btn btn-action btn-clear">
+                                <i class="fas fa-trash-alt"></i>
+                                <span>Limpar</span>
+                            </button>
+                            <button id="undoBtn" class="btn btn-action btn-undo">
+                                <i class="fas fa-undo"></i>
+                                <span>Desfazer</span>
+                            </button>
+                            <button id="predictBtn" class="btn btn-predict">
+                                <i class="fas fa-bolt"></i>
+                                <span>Predizer</span>
+                            </button>
                         </div>
                     </div>
 
-                    <!-- Confidence Bar -->
-                    <div class="confidence-section">
-                        <label>Confiança</label>
-                        <div class="confidence-bar">
-                            <div class="confidence-fill" id="confidenceFill" style="width: 0%;"></div>
+                    <!-- Prediction Results Bento -->
+                    <div class="results-bento">
+                        <div class="main-result-card bento-card">
+                            <span class="result-label">RESULTADO DA PREDIÇÃO</span>
+                            <div class="prediction-display">
+                                <span id="predictionDigit" class="digit">?</span>
+                            </div>
+                            <div class="confidence-badge">
+                                <span id="predictionConfidence">0%</span> de Confiança
+                            </div>
                         </div>
-                        <span id="confidenceText" class="confidence-text">Aguardando predição...</span>
-                    </div>
-
-                    <!-- All Predictions -->
-                    <div class="probabilities-section">
-                        <label>Probabilidades por Dígito</label>
-                        <div class="probabilities-grid" id="probabilitiesGrid">
-                            <!-- Populated by JavaScript -->
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Stats Section -->
-            <section class="stats-section">
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-icon">
-                            <i class="fas fa-palette"></i>
-                        </div>
-                        <div class="stat-content">
-                            <div class="stat-label">Pincel</div>
-                            <div class="stat-value">
-                                <input type="range" id="brushSize" min="5" max="25" value="15" 
-                                       class="slider" title="Ajuste o tamanho do pincel">
-                                <span id="brushSizeValue">15px</span>
+                        <div class="probability-chart-card bento-card">
+                            <div class="chart-header">
+                                <h3>Probabilidades por Dígito</h3>
+                                <span class="inference-time">Inferência completa em <span id="inferenceTime">0ms</span></span>
+                            </div>
+                            <div class="probability-bars" id="probabilitiesGrid">
+                                <!-- Populated by JS -->
                             </div>
                         </div>
                     </div>
 
-                    <div class="stat-card">
-                        <div class="stat-icon">
-                            <i class="fas fa-info-circle"></i>
+                    <!-- Footer Stats -->
+                    <div class="footer-stats">
+                        <div class="stat-card bento-card">
+                            <i class="fas fa-tachometer-alt stat-icon"></i>
+                            <div class="stat-info">
+                                <span class="stat-label">Latência</span>
+                                <span class="stat-value">12ms</span>
+                            </div>
                         </div>
-                        <div class="stat-content">
-                            <div class="stat-label">Status</div>
-                            <div class="stat-value" id="status">Pronto</div>
+                        <div class="stat-card bento-card">
+                            <i class="fas fa-bullseye stat-icon"></i>
+                            <div class="stat-info">
+                                <span class="stat-label">Acurácia do Modelo</span>
+                                <span class="stat-value">99.2%</span>
+                            </div>
                         </div>
-                    </div>
-
-                    <div class="stat-card">
-                        <div class="stat-icon">
-                            <i class="fas fa-gauge"></i>
-                        </div>
-                        <div class="stat-content">
-                            <div class="stat-label">Tempo</div>
-                            <div class="stat-value" id="inferenceTime">0ms</div>
+                        <div class="stat-card bento-card">
+                            <i class="fas fa-database stat-icon"></i>
+                            <div class="stat-info">
+                                <span class="stat-label">Base de Treino</span>
+                                <span class="stat-value">60k Amostras</span>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </section>
+            </main>
+        </div>
 
-            <!-- Info Section -->
-            <section class="info-section">
-                <div class="info-grid">
-                    <div class="info-card">
-                        <h3><i class="fas fa-robot"></i> Sobre o Modelo</h3>
-                        <ul>
-                            <li>🧠 Rede Neural Convolucional (CNN)</li>
-                            <li>📊 Treinado com dataset MNIST</li>
-                            <li>✅ Acurácia: 99.03%</li>
-                            <li>⚡ Inferência em Tempo Real</li>
-                        </ul>
-                    </div>
-
-                    <div class="info-card">
-                        <h3><i class="fas fa-keyboard"></i> Como Usar</h3>
-                        <ol>
-                            <li>Desenhe um dígito (0-9) no canvas</li>
-                            <li>Clique em "Predizer" ou deixe automático</li>
-                            <li>Veja a predição da IA em tempo real</li>
-                            <li>Tente outro número ou clique "Limpar"</li>
-                        </ol>
-                    </div>
-
-                    <div class="info-card">
-                        <h3><i class="fas fa-code"></i> Tecnologia</h3>
-                        <ul>
-                            <li>🔧 ONNX Runtime (Inferência JS)</li>
-                            <li>📐 PyTorch CNN (Modelo)</li>
-                            <li>🎨 HTML5 Canvas</li>
-                            <li>🚀 GitHub Pages</li>
-                        </ul>
-                    </div>
+        <!-- Footer Implementation -->
+        <footer class="main-footer">
+            <div class="footer-container">
+                <div class="footer-logo">MNIST.AI</div>
+                <div class="footer-copyright">© 2025 MNIST.AI Neural Processing Unit. All rights reserved.</div>
+                <div class="footer-links">
+                    <a href="#">Privacy Policy</a>
+                    <a href="#">Terms of Service</a>
+                    <a href="#">Github</a>
                 </div>
-            </section>
-
-            <!-- Gallery Section -->
-            <section class="gallery-section">
-                <h2>Sua Galeria de Predições</h2>
-                <div class="gallery" id="gallery">
-                    <div class="empty-gallery">
-                        <i class="fas fa-images"></i>
-                        <p>As suas predições aparecerão aqui!</p>
-                    </div>
-                </div>
-            </section>
-        </main>
-
-        <!-- Footer -->
-        <footer class="footer">
-            <p>
-                <i class="fas fa-heart"></i> Criado com ❤️ usando PyTorch e JavaScript
-            </p>
-            <p>
-                <a href="https://github.com" target="_blank">
-                    <i class="fab fa-github"></i> GitHub Repository
-                </a>
-            </p>
+            </div>
         </footer>
     </div>
 
@@ -182,6 +162,16 @@
             <i class="fas fa-spinner"></i>
         </div>
         <p>Carregando modelo...</p>
+    </div>
+
+    <!-- Hidden elements for app.js compatibility if needed -->
+    <div style="display: none;">
+        <span id="status"></span>
+        <div id="confidenceFill"></div>
+        <span id="confidenceText"></span>
+        <input type="range" id="brushSize" value="15">
+        <span id="brushSizeValue"></span>
+        <div id="gallery"></div>
     </div>
 
     <!-- Scripts -->
