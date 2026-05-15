@@ -73,6 +73,7 @@ data/MNIST/
 # Outputs
 outputs/
 results/
+.gemini
 
 # Web
 # web/models/*.onnx
