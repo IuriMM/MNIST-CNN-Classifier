@@ -75,8 +75,8 @@ outputs/
 results/
 
 # Web
-web/models/*.onnx
-web/models/
+# web/models/*.onnx
+# web/models/
 .DS_Store
 
 # OS
